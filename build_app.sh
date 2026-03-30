@@ -3,7 +3,7 @@
 set -e
 
 APP_NAME="ohseeare"
-VERSION="1.0.0"
+VERSION="1.1.0"
 APP_PATH="${APP_NAME}.app"
 CONTENTS="${APP_PATH}/Contents"
 MACOS="${CONTENTS}/MacOS"
@@ -19,7 +19,7 @@ mkdir -p "${RESOURCES}"
 
 # Compile Swift binary
 echo "Compiling..."
-swiftc -o "${MACOS}/${APP_NAME}" ohseeare.swift
+swiftc -parse-as-library -o "${MACOS}/${APP_NAME}" ohseeare.swift
 
 # Create Info.plist
 echo "Creating Info.plist..."

@@ -12,7 +12,7 @@
 ## Download
 
 ### DMG (Recommended)
-Download [ohseeare-1.0.0.dmg](https://github.com/Infatoshi/ohseeare/releases/latest)
+Download [ohseeare-1.1.0.dmg](https://github.com/Infatoshi/ohseeare/releases/latest)
 
 ### Build from Source
 ```bash

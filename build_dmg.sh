@@ -3,7 +3,7 @@
 set -e
 
 APP_NAME="ohseeare"
-VERSION="1.0.0"
+VERSION="1.1.0"
 DMG_NAME="${APP_NAME}-${VERSION}.dmg"
 
 echo "Creating DMG: ${DMG_NAME}..."
