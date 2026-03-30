@@ -6,7 +6,8 @@
 
 - ⚡ **Fast**: ~13.7ms on M4 Max (Apple Vision)
 - 🎯 **Simple**: Select region → OCR → Copy to clipboard
-- 💾 **Lightweight**: No background process, no GPU memory
+- 💾 **Saves**: Screenshots saved to `~/Downloads/` by default
+- 🧹 **Cleans**: Temp files removed automatically
 - 🔓 **Open Source**: MIT License
 
 ## Usage
