@@ -7,10 +7,21 @@ import Vision
 // 1. Takes screenshot (Cmd+Shift+4 mode)
 // 2. Runs OCR
 // 3. Copies to clipboard
-// Usage: ocr.swift
+// 4. Saves screenshot to Downloads
+// Usage: ohseeare
 
-func captureScreenshot() -> String? {
+func getDownloadsPath() -> URL {
+    let fileManager = FileManager.default
+    let downloadsURL = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
+    return downloadsURL.appendingPathComponent("Downloads")
+}
+
+func captureScreenshot() -> (imagePath: String?, filename: String)? {
     let tempPath = "/tmp/screen_capture.png"
+    let downloadsPath = getDownloadsPath()
+    let timestamp = DateFormatter().string(from: Date())
+    let filename = "screenshot_\(timestamp).png"
+    let savePath = downloadsPath.appendingPathComponent(filename)
 
     // Run screencapture in interactive mode
     print("Select region to capture (Space to capture, Esc to cancel)...")
@@ -19,20 +30,16 @@ func captureScreenshot() -> String? {
     task.launchPath = "/usr/sbin/screencapture"
     task.arguments = ["-i", tempPath]
 
-    // We need to run this and wait for user input
-    // The -i flag makes it interactive
     let pipe = Pipe()
     task.standardOutput = pipe
     task.standardError = pipe
     task.launch()
 
     // Wait for screenshot to complete (user pressed Space or Esc)
-    // We'll check the file periodically
     var attempts = 0
-    while attempts < 300 { // 30 seconds timeout
+    while attempts < 300 {
         Thread.sleep(forTimeInterval: 0.1)
         if FileManager.default.fileExists(atPath: tempPath) {
-            // File exists, but wait a bit more to ensure it's complete
             Thread.sleep(forTimeInterval: 0.2)
             let attrs = try? FileManager.default.attributesOfItem(atPath: tempPath)
             if let size = attrs?[.size] as? UInt64, size > 0 {
@@ -50,7 +57,15 @@ func captureScreenshot() -> String? {
         return nil
     }
 
-    return tempPath
+    // Copy to Downloads
+    do {
+        try FileManager.default.copyItem(atPath: tempPath, toPath: savePath.path)
+        print("✓ Saved to Downloads: \(filename)")
+        return (savePath.path, filename)
+    } catch {
+        print("Failed to save to Downloads: \(error)")
+        return (tempPath, filename)
+    }
 }
 
 func performOCR(imagePath: String) -> String? {
@@ -85,7 +100,7 @@ func performOCR(imagePath: String) -> String? {
 }
 
 // Main
-if let imagePath = captureScreenshot() {
+if let capture = captureScreenshot(), let imagePath = capture.imagePath {
     if let text = performOCR(imagePath: imagePath) {
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
@@ -97,6 +112,8 @@ if let imagePath = captureScreenshot() {
         print("✗ No text found")
     }
 
-    // Cleanup
-    try? FileManager.default.removeItem(atPath: imagePath)
+    // Cleanup temp file
+    if imagePath != capture.filename && imagePath.starts(with: "/tmp/") {
+        try? FileManager.default.removeItem(atPath: imagePath)
+    }
 }
