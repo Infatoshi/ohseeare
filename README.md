@@ -7,11 +7,22 @@
 - ⚡ **Fast**: ~13.7ms on M4 Max (Apple Vision)
 - 🎯 **Simple**: Select region → Copy image to clipboard
 - 🔤 **OCR**: Press Cmd+O → Copy text to clipboard
-- 💾 **Saves**: Screenshots saved to `~/Downloads/`
+- 💾 **Saves**: Screenshots saved to `~/Downloads`
+
+## Download
+
+### DMG (Recommended)
+Download [ohseeare-1.0.0.dmg](https://github.com/Infatoshi/ohseeare/releases/latest)
+
+### Build from Source
+```bash
+swiftc -o ohseeare ohseeare.swift
+```
 
 ## Usage
 
 ### Screenshot Mode
+Double-click the app or run:
 ```bash
 ./ohseeare
 ```
@@ -27,27 +38,17 @@ OCRs the last screenshot, copies text to clipboard.
 
 ## Global Hotkeys
 
-### Cmd+Shift+X: Screenshot
-1. Open Shortcuts app
-2. Create new shortcut
-3. Add "Run Shell Script"
-4. Path: `/Users/infatoshi/ScreenOCR/ohseeare`
+After installing the DMG, set hotkeys in System Settings > Keyboard > Keyboard Shortcuts > App Shortcuts:
 
-### Cmd+O: OCR
-1. Create new shortcut
-2. Add "Run Shell Script"
-3. Path: `/Users/infatoshi/ScreenOCR/ohseeare --ocr`
+| Action | Hotkey |
+|--------|--------|
+| Screenshot | Cmd+Shift+X |
+| OCR | Cmd+O |
 
 ## Requirements
 
 - macOS 13.0+
 - Apple Silicon or Intel
-
-## Building
-
-```bash
-swiftc -o ohseeare ohseeare.swift
-```
 
 ## License
 
