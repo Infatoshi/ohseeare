@@ -3,74 +3,55 @@
 import Cocoa
 import Vision
 
-// Simple screenshot OCR that:
-// 1. Takes screenshot (Cmd+Shift+4 mode)
-// 2. Runs OCR
-// 3. Copies to clipboard
-// 4. Saves screenshot to Downloads
-// Usage: ohseeare
+let lastScreenshotPath = "/tmp/ohseeare_last.png"
 
-func getDownloadsPath() -> URL {
-    let fileManager = FileManager.default
-    let downloadsURL = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
-    return downloadsURL.appendingPathComponent("Downloads")
+func getDimensions(_ imagePath: String) -> (width: Int, height: Int)? {
+    guard let img = CIImage(contentsOf: URL(fileURLWithPath: imagePath)) else {
+        return nil
+    }
+    let imgRep = NSCIImageRep(ciImage: img)
+    return (imgRep.pixelsWide, imgRep.pixelsHigh)
 }
 
-func captureScreenshot() -> (imagePath: String?, filename: String)? {
-    let tempPath = "/tmp/screen_capture.png"
-    let downloadsPath = getDownloadsPath()
-    let timestamp = DateFormatter().string(from: Date())
-    let filename = "screenshot_\(timestamp).png"
-    let savePath = downloadsPath.appendingPathComponent(filename)
-
-    // Run screencapture in interactive mode
-    print("Select region to capture (Space to capture, Esc to cancel)...")
-
+func captureScreenshot() -> String? {
     let task = Process()
     task.launchPath = "/usr/sbin/screencapture"
-    task.arguments = ["-i", tempPath]
-
-    let pipe = Pipe()
-    task.standardOutput = pipe
-    task.standardError = pipe
+    task.arguments = ["-i", lastScreenshotPath]
     task.launch()
 
-    // Wait for screenshot to complete (user pressed Space or Esc)
     var attempts = 0
     while attempts < 300 {
         Thread.sleep(forTimeInterval: 0.1)
-        if FileManager.default.fileExists(atPath: tempPath) {
+        if FileManager.default.fileExists(atPath: lastScreenshotPath) {
             Thread.sleep(forTimeInterval: 0.2)
-            let attrs = try? FileManager.default.attributesOfItem(atPath: tempPath)
+            let attrs = try? FileManager.default.attributesOfItem(atPath: lastScreenshotPath)
             if let size = attrs?[.size] as? UInt64, size > 0 {
                 break
             }
         }
         attempts += 1
     }
-
     task.waitUntilExit()
 
-    // Check if screenshot was captured
-    guard FileManager.default.fileExists(atPath: tempPath) else {
-        print("Screenshot cancelled")
-        return nil
-    }
+    return FileManager.default.fileExists(atPath: lastScreenshotPath) ? lastScreenshotPath : nil
+}
 
-    // Copy to Downloads
+func saveToDownloads(_ imagePath: String) -> String? {
+    let downloadsPath = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent("Downloads")
+    let timestamp = DateFormatter().string(from: Date())
+    let filename = "screenshot_\(timestamp).png"
+    let savePath = downloadsPath.appendingPathComponent(filename)
+
     do {
-        try FileManager.default.copyItem(atPath: tempPath, toPath: savePath.path)
-        print("✓ Saved to Downloads: \(filename)")
-        return (savePath.path, filename)
+        try FileManager.default.copyItem(atPath: imagePath, toPath: savePath.path)
+        return filename
     } catch {
-        print("Failed to save to Downloads: \(error)")
-        return (tempPath, filename)
+        return nil
     }
 }
 
-func performOCR(imagePath: String) -> String? {
+func performOCR(_ imagePath: String) -> String? {
     guard let img = CIImage(contentsOf: URL(fileURLWithPath: imagePath)) else {
-        print("Failed to load image")
         return nil
     }
 
@@ -82,7 +63,6 @@ func performOCR(imagePath: String) -> String? {
     do {
         try handler.perform([request])
         guard let results = request.results, !results.isEmpty else {
-            print("No text detected")
             return nil
         }
 
@@ -94,26 +74,53 @@ func performOCR(imagePath: String) -> String? {
         }
         return lines.joined(separator: "\n")
     } catch {
-        print("OCR error: \(error)")
         return nil
     }
 }
 
-// Main
-if let capture = captureScreenshot(), let imagePath = capture.imagePath {
-    if let text = performOCR(imagePath: imagePath) {
-        let pasteboard = NSPasteboard.general
-        pasteboard.clearContents()
-        pasteboard.setString(text, forType: .string)
-
-        print("✓ Text copied to clipboard (\(text.count) chars)")
-        print(text)
-    } else {
-        print("✗ No text found")
+func copyImageToClipboard(_ imagePath: String) {
+    guard let img = NSImage(contentsOfFile: imagePath),
+          let tiffRep = img.tiffRepresentation,
+          let pngData = NSBitmapImageRep(data: tiffRep)?.representation(using: .png, properties: [:]) else {
+        return
     }
+    let pasteboard = NSPasteboard.general
+    pasteboard.clearContents()
+    pasteboard.setData(pngData, forType: .string)
+}
 
-    // Cleanup temp file
-    if imagePath != capture.filename && imagePath.starts(with: "/tmp/") {
-        try? FileManager.default.removeItem(atPath: imagePath)
+func copyTextToClipboard(_ text: String) {
+    let pasteboard = NSPasteboard.general
+    pasteboard.clearContents()
+    pasteboard.setString(text, forType: .string)
+}
+
+// Main
+let args = CommandLine.arguments
+
+if args.contains("--ocr") || args.contains("-o") {
+    // OCR mode
+    if FileManager.default.fileExists(atPath: lastScreenshotPath),
+       let text = performOCR(lastScreenshotPath),
+       !text.isEmpty {
+        copyTextToClipboard(text)
+        print("✓ Text copied to clipboard (\(text.count) chars)")
+    } else {
+        print("✗ No screenshot or text found")
+    }
+} else {
+    // Screenshot mode
+    if let imagePath = captureScreenshot() {
+        if let dims = getDimensions(imagePath) {
+            print("✓ \(dims.width) × \(dims.height) px")
+        }
+
+        copyImageToClipboard(imagePath)
+
+        if let filename = saveToDownloads(imagePath) {
+            print("✓ Saved to Downloads: \(filename)")
+        }
+    } else {
+        print("✗ Screenshot cancelled")
     }
 }

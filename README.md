@@ -5,44 +5,49 @@
 ## Features
 
 - ⚡ **Fast**: ~13.7ms on M4 Max (Apple Vision)
-- 🎯 **Simple**: Select region → OCR → Copy to clipboard
-- 💾 **Saves**: Screenshots saved to `~/Downloads/` by default
-- 🧹 **Cleans**: Temp files removed automatically
-- 🔓 **Open Source**: MIT License
+- 🎯 **Simple**: Select region → Copy image to clipboard
+- 🔤 **OCR**: Press Cmd+O → Copy text to clipboard
+- 💾 **Saves**: Screenshots saved to `~/Downloads/`
 
 ## Usage
 
-### Global Hotkey (Cmd+Shift+X)
-
-1. Double-click `ohseeare.shortcut` to install
-2. Open System Settings > Keyboard > Keyboard Shortcuts
-3. Find "ohseeare" and add keyboard shortcut
-
-### Command Line
-
+### Screenshot Mode
 ```bash
 ./ohseeare
 ```
+Shows dimensions, copies image to clipboard, saves to Downloads.
+
+### OCR Mode
+```bash
+./ohseeare --ocr
+# or
+./ohseeare -o
+```
+OCRs the last screenshot, copies text to clipboard.
+
+## Global Hotkeys
+
+### Cmd+Shift+X: Screenshot
+1. Open Shortcuts app
+2. Create new shortcut
+3. Add "Run Shell Script"
+4. Path: `/Users/infatoshi/ScreenOCR/ohseeare`
+
+### Cmd+O: OCR
+1. Create new shortcut
+2. Add "Run Shell Script"
+3. Path: `/Users/infatoshi/ScreenOCR/ohseeare --ocr`
 
 ## Requirements
 
-- macOS 13.0+ (for Vision framework)
-- Apple Silicon or Intel Mac
+- macOS 13.0+
+- Apple Silicon or Intel
 
-## Building from Source
+## Building
 
 ```bash
 swiftc -o ohseeare ohseeare.swift
 ```
-
-## Comparison
-
-| Tool | Accuracy | Speed | Memory | Hotkey |
-|-------|----------|-------|--------|--------|
-| ohseeare | Apple Vision | 13.7ms | Minimal | ✓ |
-| Flameshot | Tesseract | ~100ms | 80MB | ✓ |
-| Shottr | ? | Paid | ? | ✓ |
-| macOS Live Text | Apple Vision | Built-in | - | - |
 
 ## License
 
